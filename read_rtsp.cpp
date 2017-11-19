@@ -66,9 +66,9 @@ bool save_image_to_file(CAvFrame const & picture, const char * fname, AVCodecID 
 	CAvEncoder encoder(codec);
 
 	encoder.get()->time_base = av_make_q(1, 1);
-	encoder.get()->pix_fmt = AVPixelFormat(picture.get()->format);
-	encoder.get()->height = picture.get()->height;
-	encoder.get()->width = picture.get()->width;
+	encoder.get()->pix_fmt = picture.format();
+	encoder.get()->height = picture.height();
+	encoder.get()->width = picture.width();
 	encoder.get()->sample_aspect_ratio = picture.get()->sample_aspect_ratio;
 	encoder.get()->compression_level = 100;
 	//encoder.get()->thread_count = 1;

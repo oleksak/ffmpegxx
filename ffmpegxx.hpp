@@ -1,15 +1,15 @@
 #pragma once
 
 /*
- * FFmpegXX
- * Copyright (C) 2017 oleksa
- *
- * C++ wrapper of ffmpeg library https://ffmpeg.org
- *
- * FFmpegXX is free software; you can redistribute it and/or
- * modify it under the terms of the MIT License
- *
- */
+* FFmpegXX
+* Copyright (C) 2017 oleksa
+*
+* C++ wrapper of ffmpeg library https://ffmpeg.org
+*
+* FFmpegXX is free software; you can redistribute it and/or
+* modify it under the terms of the MIT License
+*
+*/
 
 extern "C"
 {
@@ -39,6 +39,8 @@ namespace ffmpegxx {
 		{
 			av_dict_free(&m_dict);
 		}
+
+		CAcDictionary(CAcDictionary const & b) = delete;
 
 		CAcDictionary(CAcDictionary && b)
 		{
@@ -75,6 +77,7 @@ namespace ffmpegxx {
 			av_packet_unref(&m_packet);
 		}
 
+		CAvPacket(CAvPacket const & b) = delete;
 		CAvPacket(CAvPacket && b) = delete;
 
 		void reset()
@@ -135,6 +138,8 @@ namespace ffmpegxx {
 			av_frame_free(&m_frame);
 		}
 
+		CAvFrame(CAvFrame const & b) = delete;
+
 		CAvFrame(CAvFrame && b)
 		{
 			m_frame = b.m_frame;
@@ -173,6 +178,21 @@ namespace ffmpegxx {
 				throw std::bad_alloc();
 		}
 
+		AVPixelFormat format() const
+		{ 
+			return AVPixelFormat(m_frame->format); 
+		}
+
+		int width() const 
+		{ 
+			return m_frame->width; 
+		}
+		
+		int height() const	
+		{ 
+			return m_frame->height; 
+		}
+
 	protected:
 
 		AVFrame * m_frame = nullptr;
@@ -199,6 +219,7 @@ namespace ffmpegxx {
 			avcodec_free_context(&m_ctx);
 		}
 
+		CAvCodecContext(CAvCodecContext const &) = delete;
 		CAvCodecContext(CAvCodecContext &&) = delete;
 
 		int set_parameters(AVCodecParameters const * src_par)
@@ -211,7 +232,7 @@ namespace ffmpegxx {
 			return m_ctx;
 		}
 
-		AVCodecContext const * get() const 
+		AVCodecContext const * get() const
 		{
 			return m_ctx;
 		}
@@ -282,6 +303,7 @@ namespace ffmpegxx {
 			avformat_free_context(m_ctx);
 		}
 
+		CAvFormatContext(CAvFormatContext const &) = delete;
 		CAvFormatContext(CAvFormatContext &&) = delete;
 
 		AVFormatContext * get()
@@ -488,6 +510,7 @@ namespace ffmpegxx {
 			sws_freeContext(m_ctx);
 		}
 
+		CSwsContext(CSwsContext const &b) = delete;
 		CSwsContext(CSwsContext &&b)
 		{
 			m_ctx = b.m_ctx;
@@ -496,18 +519,18 @@ namespace ffmpegxx {
 
 		int convert(CAvFrame const & input_picture, CAvFrame & output_picture)
 		{
-			if (input_picture.get()->format == AVPixelFormat::AV_PIX_FMT_NONE ||
-				output_picture.get()->format == AVPixelFormat::AV_PIX_FMT_NONE)
+			if (input_picture.format() == AVPixelFormat::AV_PIX_FMT_NONE ||
+				output_picture.format() == AVPixelFormat::AV_PIX_FMT_NONE)
 			{
 				throw std::invalid_argument(__FUNCTION__);
 			}
 
 			m_ctx = sws_getCachedContext(
 				m_ctx,
-				input_picture.get()->width, input_picture.get()->height,
-				AVPixelFormat(input_picture.get()->format),
-				output_picture.get()->width, output_picture.get()->height,
-				AVPixelFormat(output_picture.get()->format),
+				input_picture.width(), input_picture.height(),
+				input_picture.format(),
+				output_picture.width(), output_picture.height(),
+				output_picture.format(),
 				SWS_BICUBIC,
 				NULL, NULL, NULL
 			);
@@ -518,7 +541,7 @@ namespace ffmpegxx {
 				m_ctx,
 				input_picture.get()->data,
 				input_picture.get()->linesize,
-				0, input_picture.get()->height,
+				0, input_picture.height(),
 				output_picture.get()->data,
 				output_picture.get()->linesize
 			);
@@ -528,7 +551,7 @@ namespace ffmpegxx {
 
 		int convert(CAvFrame const & input_picture, AVPixelFormat output_pix_fmt, CAvFrame & output_picture)
 		{
-			output_picture.reset(output_pix_fmt, input_picture.get()->width, input_picture.get()->height);
+			output_picture.reset(output_pix_fmt, input_picture.width(), input_picture.height());
 
 			return convert(input_picture, output_picture);
 		}
@@ -540,4 +563,5 @@ namespace ffmpegxx {
 
 
 } // namespace ffmpegxx
+
 
